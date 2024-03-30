@@ -1,5 +1,8 @@
 import connectMongoDb from "./db/index.js";
 import dotenv from "dotenv";
+import express from "express";
+
+const app = express();
 dotenv.config();
 connectMongoDb()
   .then(() => {
@@ -9,7 +12,5 @@ connectMongoDb()
   })
   .catch((error) => {
     console.log("🚀 ~ connectMongoDb ~ error:", error);
-    return {};
-
     throw error;
   });
