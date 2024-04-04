@@ -42,6 +42,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 userSchema.pre("save", async function (next) {
+  //isModified is used to check if the password field has changed since the last save
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();

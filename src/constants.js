@@ -1,1 +1,1 @@
-export const DATABASE_NAME = "Youtube";
+export const DATABASE_NAME = "YoutubeBackend";
