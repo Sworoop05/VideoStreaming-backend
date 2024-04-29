@@ -3,9 +3,10 @@ import { DATABASE_NAME } from "../constants.js";
 import dotenv from "dotenv";
 dotenv.config();
 const connectMongoDb = async () => {
+  console.log(  `${process.env.MONGODB_URI}/${DATABASE_NAME}`)
   try {
     const connectionInstance = await mongoose.connect(
-      `${process.env.MONGODB_URL}/${DATABASE_NAME}`
+      `${process.env.MONGODB_URI}/${DATABASE_NAME}`
     );
     console.log(
       `MongoDb connected!! DB host on :${connectionInstance.connection.host}`
