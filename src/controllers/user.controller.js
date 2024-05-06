@@ -24,9 +24,6 @@ const generateAccessAndRefereshTokens = async(userId) =>{
       throw new ApiError(500, "Something went wrong while generating referesh and access token")
   }
 }
-
-
-
 const registerUser = asyncHandler(async (req, res) => {
   // get user details from frontend
   // validation not empty
@@ -224,6 +221,13 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
   if(!avatar.url){
     throw new ApiError(400,"Error while uploading avatar file")
   }
+  await User.findByIdAndDelete(req.user?._id,{
+    $set:{
+      avatar:undefined
+    }
+  },{
+    new:true
+  })
   const user = await User.findByIdAndUpdate(req.user?._id,{
     $set:{avatar:avatar.url}
   },{new:true}).select("-password")
@@ -239,13 +243,112 @@ const updateUserCoverImage = asyncHandler(async(req,res)=>{
   if(!coverImage.url){
     throw new ApiError(400,"Error while uploading coverImage file")
   }
+  await User.findByIdAndUpdate(req.user?._id,{
+    $set:{coverImage:undefined}
+  },{new:true})
   const user = await User.findByIdAndUpdate(req.user?._id,{
     $set:{coverImage:coverImage.url}
   },{new:true}).select("-password")
 return res.status(200)
           .json(new ApiResponse("coverImage updated successfully",user,200))
 })
+const getUserChannelProfile = asyncHandler(async(req,res)=>{
+  const username = req.params
+  if(!username.trim()){
+    throw new ApiError("username not found")
+  }
+
+  const channel = await User.aggregate([{
+   $match:{
+    username: username?.toLowerCase()
+   }
+  },{
+    $lookup:{
+      from:"Subscription",
+      localField:"_id",
+      foreignField:"channel",
+      as:"subcribers"
+    }
+  },{
+    $lookup:{
+      from:"Subscription",
+      localField:"_id",
+      foreignField:"suscriber",
+      as:"subcribeTo"
+  }},{
+    $addFields:{
+      subscribersCount:{
+        $size:"$subscribers"
+      },
+      channelsSubscribeToCount:{
+        $size:"$subcribeTo"
+      },
+      isSubscribed:{
+        $cond:{
+          if:{$in:[req.user?.id,$subscibers.suscriber]},
+          then:true,
+          else:false
+        }
+      }
+    }
+  },{
+    $project:{
+      username:1,
+      fullname:1,
+      subscribersCount:1,
+      channelsSubscribeToCount:1,
+      isSubscribed:1,
+      avatar:1,
+      coverImage:1,
+      email:1
+
+    }
+  }])
+  if(!channel?.length){
+    throw new ApiError(404,"channel doesnot exist ")
+  }
+  return res.status(200)
+             .json( new ApiResponse(
+              "channel fetched successfully",
+              channel[0],200
+             ))
+
+})
+const getWatchHistory = asyncHandler(async(req,res)=>{
+const user = await User.aggregate([{
+  $match:{
+    _id:new mongoose.Types.ObjectId(req.user?._id)
+  }},{
+    $lookup:{
+      from:"Video",
+      localField:"watchHistory",
+      foreignField:"_id",
+      as:"watchHistory",
+      pipeline:[
+        {
+          $lookup:{
+            from:"User",
+            localField:"owner",
+            foreignField:"_id",
+            as:"owner"
+          }
+        },{
+          $addFields:{
+            owner:{
+          $arrayElemAt:["owner",0]
+            }
+          }
+        }
+      ]
+    }
+  }
+])
+return res.
+status(200)
+.json(new ApiResponse("watch history successfully fetched",user[0].watchHistory,200))
+
+})
 export  {registerUser,loginUser,logoutUser,
   refreshAccessToken,changePassword,
   getCurrentUser,updateUserDetails,
-  updateUserAvatar,updateUserCoverImage};
+  updateUserAvatar,updateUserCoverImage,getUserChannelProfile,getWatchHistory};
