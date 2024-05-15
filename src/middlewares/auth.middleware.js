@@ -5,7 +5,7 @@ import {User} from "../models/user.model.js"
 
 
 
-const jwtVerify = asyncHandler(async (req,_,next)=>{
+const verifyJWT = asyncHandler(async (req,_,next)=>{
 
 try {
     const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","")
@@ -27,4 +27,4 @@ try {
     throw new ApiError(401, error?.message||"Invalid access token")
 }
 })
-export default jwtVerify
+export  {verifyJWT}

@@ -104,10 +104,11 @@ console.log(email)
 if (!username && !email) {
   throw new ApiError(400, "username or email is required")
 }
-const user = await User.findOne({
-  $or: [{username}, {email}]
-})
+// const user = await User.findOne({
+//   $or: [{username}, {email}]
+// })
 
+const user = await User.findOne({email})
 if (!user) {
   throw new ApiError(404, "User does not exist")
 }
@@ -253,7 +254,8 @@ return res.status(200)
           .json(new ApiResponse("coverImage updated successfully",user,200))
 })
 const getUserChannelProfile = asyncHandler(async(req,res)=>{
-  const username = req.params
+  const {username} = req.params
+console.log(username)
   if(!username.trim()){
     throw new ApiError("username not found")
   }
@@ -285,7 +287,7 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
       },
       isSubscribed:{
         $cond:{
-          if:{$in:[req.user?.id,$subscibers.suscriber]},
+          if:{ $in: [req.user?.id, "$subscribers.suscriber"]},
           then:true,
           else:false
         }
